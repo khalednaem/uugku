@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SECURE TERMINAL</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    font-family: "Courier New", monospace;
+}
+
+/* الشاشة الرئيسية */
+#app {
+    width: 100%;
+    height: 100vh;
+    background:
+        radial-gradient(circle at center,
+        #003b0d 0%,
+        #001507 30%,
+        #000 75%);
+    color: #00ff41;
+    position: relative;
+    overflow: hidden;
+}
+
+/* إطار الشاشة */
+.terminal {
+    position: absolute;
+    inset: 15px;
+
+    border: 1px solid #00ff41;
+
+    padding: 15px;
+
+    box-shadow:
+        0 0 25px #00ff41,
+        inset 0 0 50px rgba(0,255,65,.12);
+}
+
+/* العنوان */
+.header {
+    display: flex;
+    justify-content: space-between;
+
+    padding-bottom: 10px;
+
+    border-bottom: 1px solid #00ff41;
+
+    font-size: 13px;
+}
+
+.logo {
+    font-weight: bold;
+
+    text-shadow:
+        0 0 10px #00ff41;
+}
+
+.online {
+    color: #00ff41;
+}
+
+/* تحذير */
+.warning {
+    text-align: center;
+
+    margin: 13px 0;
+
+    color: #ff2020;
+
+    font-size: 22px;
+
+    font-weight: bold;
+
+    text-shadow:
+        0 0 8px red,
+        0 0 20px red;
+
+    animation:
+        warningFlash .18s infinite alternate;
+}
+
+@keyframes warningFlash {
+
+    from {
+        opacity: .35;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* الكود */
+#code {
+    height: 58%;
+
+    overflow: hidden;
+
+    direction: ltr;
+
+    text-align: left;
+
+    color: #00ff41;
+
+    font-size: 13px;
+
+    line-height: 1.55;
+
+    text-shadow:
+        0 0 5px #00ff41;
+}
+
+.line {
+    white-space: nowrap;
+}
+
+.red {
+    color: #ff3030;
+
+    text-shadow:
+        0 0 8px red;
+}
+
+/* التحميل */
+.loading {
+    position: absolute;
+
+    left: 6%;
+    right: 6%;
+
+    bottom: 65px;
+}
+
+.bar-border {
+    width: 100%;
+
+    height: 23px;
+
+    border: 1px solid #00ff41;
+
+    padding: 3px;
+
+    box-shadow:
+        0 0 15px #00ff41;
+}
+
+.bar {
+    height: 100%;
+
+    width: 0%;
+
+    background: #00ff41;
+
+    box-shadow:
+        0 0 20px #00ff41;
+
+    transition:
+        width .025s linear;
+}
+
+.percent {
+    text-align: center;
+
+    margin-top: 7px;
+
+    color: #00ff41;
+
+    font-size: 17px;
+}
+
+/* النص السفلي */
+.status {
+    position: absolute;
+
+    left: 0;
+    right: 0;
+
+    bottom: 15px;
+
+    text-align: center;
+
+    color: #00ff41;
+
+    font-size: 13px;
+}
+
+/* خطوط الشاشة */
+.scanlines {
+    position: fixed;
+
+    inset: 0;
+
+    pointer-events: none;
+
+    z-index: 50;
+
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            transparent 0px,
+            transparent 3px,
+            rgba(0,255,65,.035) 4px
+        );
+}
+
+/* شاشة النهاية */
+#finish {
+    display: none;
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 100;
+
+    background: #000;
+
+    color: #00ff41;
+
+    justify-content: flex-end;
+
+    align-items: center;
+
+    flex-direction: column;
+
+    padding-bottom: 65px;
+
+    text-align: center;
+}
+
+/* الرسالة تظهر من تحت */
+.final-message {
+    font-size: 22px;
+
+    font-weight: bold;
+
+    text-shadow:
+        0 0 8px #00ff41,
+        0 0 20px #00ff41;
+
+    transform: translateY(120px);
+
+    opacity: 0;
+
+    animation:
+        messageUp 1s forwards;
+}
+
+@keyframes messageUp {
+
+    to {
+        transform: translateY(0);
+
+        opacity: 1;
+    }
+}
+
+/* علامة النجاح */
+.check {
+    position: absolute;
+
+    top: 35%;
+
+    font-size: 65px;
+
+    color: #00ff41;
+
+    text-shadow:
+        0 0 20px #00ff41;
+
+    animation:
+        pulse .5s infinite alternate;
+}
+
+@keyframes pulse {
+
+    from {
+        transform: scale(.9);
+    }
+
+    to {
+        transform: scale(1.08);
+    }
+}
+
+/* الشاشة السوداء النهائية */
+#blackout {
+    display: none;
+
+    position: fixed;
+
+    inset: 0;
+
+    background: #000;
+
+    z-index: 999;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="app">
+
+    <div class="terminal">
+
+        <div class="header">
+
+            <div class="logo">
+                █ SECURE TERMINAL
+            </div>
+
+            <div class="online">
+                SYSTEM ONLINE
+            </div>
+
+        </div>
+
+        <div class="warning">
+            ⚠ SECURITY ALERT ⚠
+        </div>
+
+        <div id="code"></div>
+
+        <div class="loading">
+
+            <div class="bar-border">
+
+                <div
+                    class="bar"
+                    id="bar">
+                </div>
+
+            </div>
+
+            <div
+                class="percent"
+                id="percent">
+                0%
+            </div>
+
+        </div>
+
+        <div class="status">
+            PROCESSING SYSTEM...
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- شاشة النهاية -->
+
+<div id="finish">
+
+    <div class="check">
+        ✓
+    </div>
+
+    <div class="final-message">
+        تم إرسال المعلومات المطلوبة
+    </div>
+
+</div>
+
+
+<!-- الشاشة السوداء -->
+
+<div id="blackout"></div>
+
+<div class="scanlines"></div>
+
+
+<script>
+
+/* =====================================
+   الكود المتحرك
+===================================== */
+
+const code =
+    document.getElementById("code");
+
+const lines = [
+
+    "[SYSTEM] Initializing secure terminal...",
+    "[NETWORK] Establishing encrypted channel...",
+    "[SECURITY] Checking protocols...",
+    "[SYSTEM] Loading secure modules...",
+    "[ACCESS] Verifying connection...",
+    "[PROCESS] Processing request...",
+    "[ENCRYPT] Encrypting transmission...",
+    "[NETWORK] Synchronizing...",
+    "[SECURITY] Running verification...",
+    "[SYSTEM] Finalizing operation...",
+    "[STATUS] PROCESS COMPLETE"
+
+];
+
+let lineIndex = 0;
+
+
+function addLine() {
+
+    if (lineIndex >= lines.length)
+        return;
+
+    const line =
+        document.createElement("div");
+
+    line.className = "line";
+
+    if (
+        lineIndex === 2 ||
+        lineIndex === 8
+    ) {
+
+        line.classList.add("red");
+    }
+
+    const random =
+        Math.random()
+        .toString(16)
+        .substring(2, 14)
+        .toUpperCase();
+
+    line.textContent =
+        lines[lineIndex]
+        + " ["
+        + random
+        + "]";
+
+    code.appendChild(line);
+
+    code.scrollTop =
+        code.scrollHeight;
+
+    lineIndex++;
+
+    setTimeout(addLine, 65);
+}
+
+addLine();
+
+
+/* =====================================
+   تحميل سريع
+   حوالي ثانية
+===================================== */
+
+const bar =
+    document.getElementById("bar");
+
+const percent =
+    document.getElementById("percent");
+
+let progress = 0;
+
+
+const loader =
+    setInterval(() => {
+
+        progress += 2.5;
+
+        if (progress >= 100) {
+
+            progress = 100;
+
+            clearInterval(loader);
+
+            setTimeout(finish, 100);
+        }
+
+        bar.style.width =
+            progress + "%";
+
+        percent.textContent =
+            Math.floor(progress) + "%";
+
+    }, 25);
+
+
+/* =====================================
+   النهاية
+===================================== */
+
+function finish() {
+
+    document.getElementById("finish")
+        .style.display = "flex";
+
+    alarm();
+
+    /*
+       بعد ظهور الرسالة،
+       تتحول الشاشة إلى الأسود.
+    */
+
+    setTimeout(() => {
+
+        document.getElementById("blackout")
+            .style.display = "block";
+
+    }, 2300);
+}
+
+
+/* =====================================
+   صفارة الإنذار
+===================================== */
+
+function alarm() {
+
+    const AudioContext =
+        window.AudioContext ||
+        window.webkitAudioContext;
+
+    if (!AudioContext)
+        return;
+
+    const audio =
+        new AudioContext();
+
+    const oscillator =
+        audio.createOscillator();
+
+    const gain =
+        audio.createGain();
+
+    oscillator.type = "square";
+
+    oscillator.connect(gain);
+
+    gain.connect(audio.destination);
+
+    gain.gain.value = 0.035;
+
+    oscillator.start();
+
+    let high = false;
+
+    const alarmLoop =
+        setInterval(() => {
+
+            high = !high;
+
+            oscillator.frequency
+                .setValueAtTime(
+                    high ? 950 : 450,
+                    audio.currentTime
+                );
+
+        }, 180);
+
+
+    setTimeout(() => {
+
+        clearInterval(alarmLoop);
+
+        oscillator.stop();
+
+        audio.close();
+
+    }, 1800);
+}
+
+</script>
+
+</body>
+</html>
